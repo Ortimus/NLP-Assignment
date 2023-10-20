@@ -254,6 +254,29 @@ class NMT(nn.Module):
         ###     Tensor Stacking:
         ###         https://pytorch.org/docs/stable/torch.html#torch.stack
         ### START CODE HERE (~9 Lines)
+
+        # Step 1: Apply attention projection layer to enc_hiddens
+        enc_hiddens_proj = self.att_projection(enc_hiddens) # shape (b, src_len, h)
+
+        # Step 2: Construct tensor Y of target sentences
+        Y = self.model_embeddings.target(target_padded)
+
+        # Step 3: Iterate over time dimension of Y
+
+        for i in torch.split(Y, 1, dim=0): # torch.split(tensor, split_size_or_section, dim=0), Y_t.shape (1, b, e) 
+          
+            Y_t = i.squeeze(0) # Y_t.shape (b, e), o_prev.shape (b, h), squeeze explicitly at location
+            Ybar_t = torch.cat((Y_t, o_prev), dim=1)  # Ybar_t.shape(b, e+h), torch.cat(tensors, dim=0, out=None)
+            
+            dec_state, o_t, e_t = self.step(Ybar_t, dec_state, enc_hiddens, enc_hiddens_proj, enc_masks) # dec_state, combined_output, e_t
+            
+            combined_outputs.append(o_t) # shape (b, h)
+            o_prev = o_t
+
+        # Step 4: Stack combined_outputs to get the final tensor 
+        combined_outputs = torch.stack(combined_outputs, dim=0) # (tgt_len, b, h)
+
+
         ### END CODE HERE
 
         return combined_outputs
