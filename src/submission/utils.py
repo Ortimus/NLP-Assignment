@@ -40,6 +40,18 @@ def pad_sents(sents, pad_token):
     sents_padded = []
 
     ### START CODE HERE (~6 Lines)
+
+    #max_length = max([len(sent) for sent in sents]) # or max_length = max(map(len, sents))
+    #for sent in sents:
+    #    pad_length = max_length - len(sent)
+    #    sents_padded.append(sent + [pad_token] * pad_length)
+
+    # Find the length of the longest sentence in the batch
+    max_length = max(len(sent) for sent in sents)
+
+    # Pad each sentence to the length of the longest sentence
+    sents_padded = [sent + [pad_token] * (max_length - len(sent)) for sent in sents]
+
     ### END CODE HERE
 
     return sents_padded
