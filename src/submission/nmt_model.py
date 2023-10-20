@@ -164,6 +164,28 @@ class NMT(nn.Module):
         ###     Tensor Permute:
         ###         https://pytorch.org/docs/stable/tensors.html#torch.Tensor.permute
         ### START CODE HERE (~ 8 Lines)
+
+        # Step 1: Compute tensor `X` of source sentences
+        X = self.model_embeddings.source(source_padded) # X.shape (src_len, b, e)
+
+        # Step 2: Apply pack_padded_sequence to X
+        X_packed = pack_padded_sequence(X, source_lengths) # X-packed.shape (src_len, b, e)
+
+        # Apply the encoder to X
+        enc_hiddens, (last_hidden, last_cell) = self.encoder(X_packed) # enc.hiddens.shape (src_len, b, h*2)
+
+        # Pad the packed sequence
+        enc_hiddens, _ =  pad_packed_sequence(enc_hiddens, batch_first=True) # shape (b, src_len, h*2)
+
+        # Step 3: Compute initial states for the decoder
+        init_decoder_hidden = self.h_projection(torch.cat((last_hidden[0], last_hidden[1]), 1)) # shape (b, 2*h)
+        init_decoder_cell = self.c_projection(torch.cat((last_cell[0], last_cell[1]), 1)) # shape (b, 2*h)
+        dec_init_state = (init_decoder_hidden, init_decoder_cell)
+
+   
+        
+        
+
         ### END CODE HERE
 
         return enc_hiddens, dec_init_state
